@@ -30,6 +30,14 @@
                         <li><em>{% trans "Nobody has joined your clique yet. Go tell your friends about it!" %}</em></li>
                     {% endfor %}
                 </ul>
+                {% if clique_join_url %}
+                    <p>
+                        {% trans "Share this link with your friends so they can buy tickets and join your clique:" %}
+                    </p>
+                    <p class="form-control-static">
+                        <a href="{{ clique_join_url }}" target="_blank" rel="noopener">{{ clique_join_url }}</a>
+                    </p>
+                {% endif %}
             {% endif %}
         {% else %}
             <p>

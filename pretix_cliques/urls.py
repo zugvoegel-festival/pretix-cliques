@@ -1,8 +1,9 @@
 from django.urls import path, re_path
 
 from .views import (
-    CliqueDelete, CliqueDetail, CliqueList, ControlCliqueChange, MetricsView,
-    OrderCliqueChange, RaffleOverrideChange, RaffleView, RaffleRejectView, StatsView
+    CliqueDelete, CliqueDetail, CliqueJoinLinkView, CliqueList, ControlCliqueChange,
+    MetricsView, OrderCliqueChange, RaffleOverrideChange, RaffleView, RaffleRejectView,
+    StatsView
 )
 
 urlpatterns = [
@@ -29,6 +30,9 @@ urlpatterns = [
 ]
 
 event_patterns = [
+    path('clique/<str:invite_token>/join/',
+         CliqueJoinLinkView.as_view(),
+         name='event.clique.join'),
     re_path(r'^order/(?P<order>[^/]+)/(?P<secret>[A-Za-z0-9]+)/clique/modify$',
             OrderCliqueChange.as_view(),
             name='event.order.clique.modify'),

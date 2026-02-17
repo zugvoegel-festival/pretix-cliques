@@ -1,0 +1,9 @@
+{% load i18n %}
+<div class="alert alert-info alert-clique-join" role="status">
+    <strong>{% trans "You're joining a clique" %}</strong>
+    <p class="mb-0">
+        {% blocktrans trimmed with name=clique.name %}
+            You're here to join the clique <strong>{{ name }}</strong>. Add a ticket to your cart and proceed to checkout – you will only need to enter the clique password.
+        {% endblocktrans %}
+    </p>
+</div>

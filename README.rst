@@ -36,6 +36,17 @@ Development setup
 6. Restart your local pretix server. You can now use the plugin from this repository for your events by enabling it in
    the 'plugins' tab in the settings.
 
+Invite link and e-mails
+-----------------------
+
+When a customer creates a clique and places an order, they see an **invite link** on their order page. The link uses a
+short random token (not the clique id), so it is not guessable. Sharing this link lets friends open the event shop with
+that clique pre-selected in checkout (they only need to enter the clique password).
+
+In order confirmation e-mails you can use the placeholder **{clique_join_url}**. It is replaced with the invite link
+for customers who created a clique (clique admins); for other recipients it is empty. Example text: "Share this link
+with your friends so they can join your clique: {clique_join_url}".
+
 
 License
 -------

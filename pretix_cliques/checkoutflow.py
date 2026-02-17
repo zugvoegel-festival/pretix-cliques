@@ -200,6 +200,13 @@ class CliqueStep(CartMixin, TemplateFlowStep):
         ctx['join_form'] = self.join_form
         ctx['cart'] = self.get_cart()
         ctx['selected'] = self.cart_session.get('clique_mode', '')
+        ctx['clique_join_name'] = None
+        if self.cart_session.get('clique_mode') == 'join' and 'clique_join' in self.cart_session:
+            try:
+                clique = Clique.objects.get(event=self.event, pk=self.cart_session['clique_join'])
+                ctx['clique_join_name'] = clique.name
+            except Clique.DoesNotExist:
+                pass
         return ctx
 
     def is_completed(self, request, warn=False):

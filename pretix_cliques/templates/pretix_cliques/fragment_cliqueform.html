@@ -35,6 +35,12 @@
         <div id="clique_join"
                 class="panel-collapse collapsed {% if selected == "join" %}in{% endif %}">
             <div class="panel-body form-horizontal">
+                {% if clique_join_name %}
+                    <div class="alert alert-success" role="status">
+                        <strong>{% trans "You're joining this clique" %}: {{ clique_join_name }}</strong>
+                        <p class="mb-0">{% trans "Enter the clique password below and continue." %}</p>
+                    </div>
+                {% endif %}
                 {% bootstrap_form join_form layout="checkout" %}
             </div>
         </div>

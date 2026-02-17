@@ -5,17 +5,50 @@ from django.template.loader import get_template
 from django.urls import resolve, reverse
 from django.utils.translation import gettext_lazy as _
 from pretix.base.models import Event, Order, OrderPosition
-from pretix.base.signals import logentry_display, order_placed
+from pretix.base.services.placeholders import SimpleFunctionalTextPlaceholder
+from pretix.base.signals import logentry_display, order_placed, register_mail_placeholders
 from pretix.control.forms.filter import FilterForm
 from pretix.control.signals import nav_event, order_info as control_order_info
+from pretix.multidomain.urlreverse import build_absolute_uri
 from pretix.presale.signals import (
-    checkout_confirm_page_content, checkout_flow_steps, order_info,
-    order_meta_from_request,
+    checkout_confirm_page_content, checkout_flow_steps, front_page_top,
+    order_info, order_meta_from_request,
 )
 from pretix.presale.views.cart import cart_session
 
 from .checkoutflow import CliqueStep
 from .models import Clique, OrderClique
+
+
+def get_clique_join_url(event, clique):
+    """Build absolute URL for the clique invite link (join this clique in checkout)."""
+    return build_absolute_uri(
+        event,
+        'plugins:pretix_cliques:event.clique.join',
+        kwargs={'invite_token': clique.invite_token},
+    )
+
+
+def _clique_join_url_render(*, event, order):
+    if not order:
+        return ''
+    try:
+        oc = order.orderclique
+        if oc.is_admin:
+            return get_clique_join_url(event, oc.clique)
+    except OrderClique.DoesNotExist:
+        pass
+    return ''
+
+
+@receiver(register_mail_placeholders, dispatch_uid="clique_register_mail_placeholders")
+def register_clique_mail_placeholders(sender: Event, **kwargs):
+    return SimpleFunctionalTextPlaceholder(
+        'clique_join_url',
+        ['event', 'order'],
+        _clique_join_url_render,
+        sample='https://example.com/…/clique/Ab3xY9kL2mNpQrSt/join/',
+    )
 
 
 @receiver(signal=checkout_flow_steps, dispatch_uid="clique_checkout_step")
@@ -51,6 +84,21 @@ def placed_order(sender: Event, order: Order, **kwargs):
             c.ordercliques.create(order=order, is_admin=False)
 
 
+@receiver(front_page_top, dispatch_uid="clique_front_page_top")
+def clique_front_page_banner(sender: Event, request: HttpRequest, **kwargs):
+    """Show a prominent banner when the user landed via clique invite link (session has clique_join)."""
+    cs = cart_session(request)
+    clique_pk = cs.get('clique_join')
+    if not clique_pk:
+        return ""
+    try:
+        clique = sender.cliques.get(pk=clique_pk)
+    except Clique.DoesNotExist:
+        return ""
+    template = get_template('pretix_cliques/front_page_clique_banner.html')
+    return template.render({'clique': clique, 'event': sender}, request=request)
+
+
 @receiver(checkout_confirm_page_content, dispatch_uid="clique_confirm")
 def confirm_page(sender: Event, request: HttpRequest, **kwargs):
     cs = cart_session(request)
@@ -76,10 +124,6 @@ def confirm_page(sender: Event, request: HttpRequest, **kwargs):
 @receiver(order_info, dispatch_uid="clique_order_info")
 def order_info(sender: Event, order: Order, **kwargs):
     template = get_template('pretix_cliques/order_info.html')
-
-    if not order.require_approval:
-        return ""
-
     ctx = {
         'order': order,
         'event': sender,
@@ -93,9 +137,10 @@ def order_info(sender: Event, order: Order, **kwargs):
             order__orderclique__clique=c.clique,
             item__admission=True
         ).exclude(order=order)
+        if c.is_admin:
+            ctx['clique_join_url'] = get_clique_join_url(sender, c.clique)
     except OrderClique.DoesNotExist:
-        pass
-
+        return ""
     return template.render(ctx)
 
 

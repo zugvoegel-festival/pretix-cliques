@@ -97,6 +97,26 @@ msgstr ""
 msgid "Clique"
 msgstr "Clique"
 
+#: pretix_cliques/templates/pretix_cliques/order_info.html:35
+msgid "Share this link with your friends so they can buy tickets and join your clique:"
+msgstr "Teile diesen Link mit deinen Freunden, damit sie Tickets kaufen und deiner Clique beitreten können:"
+
+#: pretix_cliques/templates/pretix_cliques/front_page_clique_banner.html:4
+msgid "You're joining a clique"
+msgstr "Du trittst einer Clique bei"
+
+#: pretix_cliques/templates/pretix_cliques/front_page_clique_banner.html:7
+msgid "You're here to join the clique <strong>{{ name }}</strong>. Add a ticket to your cart and proceed to checkout – you will only need to enter the clique password."
+msgstr "Du bist hier, um der Clique <strong>{{ name }}</strong> beizutreten. Lege ein Ticket in den Warenkorb und gehe zur Kasse – du musst nur noch das Cliquen-Passwort eingeben."
+
+#: pretix_cliques/templates/pretix_cliques/fragment_cliqueform.html
+msgid "You're joining this clique"
+msgstr "Du trittst dieser Clique bei"
+
+#: pretix_cliques/templates/pretix_cliques/fragment_cliqueform.html
+msgid "Enter the clique password below and continue."
+msgstr "Gib unten das Cliquen-Passwort ein und fahre fort."
+
 #: pretix_cliques/models.py:24
 msgid "Clique administrator"
 msgstr "Cliquen-Administrator"

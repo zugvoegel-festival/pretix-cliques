@@ -29,7 +29,9 @@ from pretix.control.permissions import EventPermissionRequiredMixin
 from pretix.control.views import UpdateView
 from pretix.control.views.orders import OrderView
 from pretix.multidomain.urlreverse import eventreverse
+from pretix.base.services.cart import CartError, add_items_to_cart
 from pretix.presale.views import EventViewMixin
+from pretix.presale.views.cart import cart_session, get_or_create_cart_id
 from pretix.presale.views.order import OrderDetailMixin
 from .checkoutflow import CliqueCreateForm, CliqueJoinForm
 from .models import Clique, OrderClique, OrderRaffleOverride
@@ -188,6 +190,59 @@ class OrderCliqueChange(EventViewMixin, OrderDetailMixin, TemplateView):
         self.request = request
 
         return super().dispatch(request, *args, **kwargs)
+
+
+class CliqueJoinLinkView(EventViewMixin, View):
+    """
+    Presale view: set cart session to join the given clique and redirect to event index.
+    Optionally preselect the same product as the clique admin. Used as the "invite link".
+    """
+    def get(self, request, *args, **kwargs):
+        invite_token = kwargs.get('invite_token')
+        clique = get_object_or_404(Clique, event=request.event, invite_token=invite_token)
+        cart_id = get_or_create_cart_id(request)
+        cs = cart_session(request)
+        cs['clique_join'] = clique.pk
+        cs['clique_mode'] = 'join'
+
+        # Preselect the same product as the clique admin (first admission position)
+        try:
+            admin_oc = clique.ordercliques.filter(is_admin=True).select_related('order').first()
+            if admin_oc:
+                pos = (
+                    admin_oc.order.positions.filter(
+                        addon_to__isnull=True,
+                        item__admission=True,
+                        canceled=False,
+                    )
+                    .order_by('positionid')
+                    .first()
+                )
+                if pos:
+                    item_spec = {
+                        'item': pos.item_id,
+                        'variation': pos.variation_id if pos.variation_id else None,
+                        'count': 1,
+                    }
+                    if request.event.has_subevents and pos.subevent_id:
+                        item_spec['subevent'] = pos.subevent_id
+                    sc = getattr(request, 'sales_channel', None)
+                    add_items_to_cart.apply(
+                        args=(
+                            request.event.id,
+                            [item_spec],
+                            cart_id,
+                            request.LANGUAGE_CODE or 'en',
+                        ),
+                        kwargs={'sales_channel': sc.identifier if sc else 'web'},
+                    )
+        except (CartError, Exception):
+            pass  # Redirect anyway; clique is in session, user can add product manually
+
+        redirect_kwargs = {}
+        if kwargs.get('cart_namespace'):
+            redirect_kwargs['cart_namespace'] = kwargs['cart_namespace']
+        return redirect(eventreverse(request.event, 'presale:event.index', kwargs=redirect_kwargs))
 
 
 class ControlCliqueForm(forms.ModelForm):
