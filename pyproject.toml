@@ -30,7 +30,7 @@ requires = [
 ]
 
 [project.urls]
-homepage = "https://github.com/pretix/pretix-cliques"
+homepage = "https://github.com/zugvoegel-festival/pretix-cliques"
 
 [tool.setuptools]
 include-package-data = true

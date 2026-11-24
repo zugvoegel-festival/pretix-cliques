@@ -164,7 +164,7 @@ def control_order_info(sender: Event, request, order: Order, **kwargs):
 
 
 @receiver(signal=logentry_display, dispatch_uid="clique_logentry_display")
-def shipping_logentry_display(sender, logentry, **kwargs):
+def clique_logentry_display(sender, logentry, **kwargs):
     if not logentry.action_type.startswith('pretix_cliques'):
         return
 
@@ -174,8 +174,8 @@ def shipping_logentry_display(sender, logentry, **kwargs):
         'pretix_cliques.order.created': _('The user created a new clique.'),
         'pretix_cliques.order.changed': _('The user changed a clique password.'),
         'pretix_cliques.order.deleted': _('The clique has been deleted.'),
-        'pretix_cliques.clique.deleted': _('The clique has been changed.'),
-        'pretix_cliques.clique.changed': _('The clique has been deleted.'),
+        'pretix_cliques.clique.deleted': _('The clique has been deleted.'),
+        'pretix_cliques.clique.changed': _('The clique has been changed.'),
     }
 
     if logentry.action_type in plains:

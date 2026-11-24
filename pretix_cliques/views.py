@@ -3,36 +3,37 @@ import hmac
 from collections import defaultdict
 
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef
 from django.http import Http404, HttpResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 from django.views import View
 from django.views.decorators.clickjacking import xframe_options_exempt
-from django.views.generic import ListView, TemplateView, FormView
+from django.views.generic import FormView, ListView, TemplateView
 from django_scopes import scopes_disabled
 
-from pretix.helpers.compat import CompatDeleteView
-from pretix_cliques.tasks import run_raffle, run_rejection
-
-from django.conf import settings
-from pretix.base.models import Order, SubEvent, OrderPosition, OrderRefund, Event
+from pretix.base.models import Event, Order, OrderPosition, OrderRefund, SubEvent
+from pretix.base.services.cart import CartError, add_items_to_cart
 from pretix.base.views.metrics import unauthed_response
 from pretix.base.views.tasks import AsyncAction
 from pretix.control.forms.widgets import Select2
 from pretix.control.permissions import EventPermissionRequiredMixin
 from pretix.control.views import UpdateView
 from pretix.control.views.orders import OrderView
+from pretix.helpers.compat import CompatDeleteView
 from pretix.multidomain.urlreverse import eventreverse
-from pretix.base.services.cart import CartError, add_items_to_cart
 from pretix.presale.views import EventViewMixin
 from pretix.presale.views.cart import cart_session, get_or_create_cart_id
 from pretix.presale.views.order import OrderDetailMixin
+
+from pretix_cliques.tasks import run_raffle, run_rejection
+
 from .checkoutflow import CliqueCreateForm, CliqueJoinForm
 from .models import Clique, OrderClique, OrderRaffleOverride
 
@@ -186,11 +187,6 @@ class OrderCliqueChange(EventViewMixin, OrderDetailMixin, TemplateView):
 
         return ctx
 
-    def dispatch(self, request, *args, **kwargs):
-        self.request = request
-
-        return super().dispatch(request, *args, **kwargs)
-
 
 class CliqueJoinLinkView(EventViewMixin, View):
     """
@@ -236,7 +232,7 @@ class CliqueJoinLinkView(EventViewMixin, View):
                         ),
                         kwargs={'sales_channel': sc.identifier if sc else 'web'},
                     )
-        except (CartError, Exception):
+        except CartError:
             pass  # Redirect anyway; clique is in session, user can add product manually
 
         redirect_kwargs = {}
