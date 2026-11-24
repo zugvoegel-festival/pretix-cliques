@@ -13,9 +13,9 @@ Production install
 
 1. Clone this repository
 
-2. Activate the virtual environment you use for pretix development.
+2. Activate the virtual environment you use for pretix.
 
-3. Run ``python setup.py install``
+3. Run ``pip install .``
 
 4. Run ``python -m pretix migrate`` and ``python -m pretix rebuild``
 

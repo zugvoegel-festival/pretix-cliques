@@ -41,10 +41,15 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+.pytest_cache/
 nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+
+# Virtual environments
+.venv/
+venv/
 
 # Translations
 *.mo
